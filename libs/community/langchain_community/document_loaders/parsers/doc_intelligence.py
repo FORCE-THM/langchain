@@ -56,7 +56,7 @@ class AzureAIDocumentIntelligenceParser(BaseBlobParser):
         )
         self.api_model = api_model
         self.mode = mode
-        assert self.mode in ["single", "page", "markdown"]
+        assert self.mode in ["single", "page", "markdown", "page_markdown"]
 
     def _generate_docs_page(self, result: Any) -> Iterator[Document]:
         for p in result.pages:
@@ -81,13 +81,13 @@ class AzureAIDocumentIntelligenceParser(BaseBlobParser):
                 self.api_model,
                 file_obj,
                 content_type="application/octet-stream",
-                output_content_format="markdown" if self.mode == "markdown" else "text",
+                output_content_format="markdown" if (self.mode == "markdown" or self.mode == "page_markdown")  else "text",
             )
             result = poller.result()
 
             if self.mode in ["single", "markdown"]:
                 yield from self._generate_docs_single(result)
-            elif self.mode in ["page"]:
+            elif self.mode in ["page", "page_markdown"]:
                 yield from self._generate_docs_page(result)
             else:
                 raise ValueError(f"Invalid mode: {self.mode}")
@@ -99,13 +99,13 @@ class AzureAIDocumentIntelligenceParser(BaseBlobParser):
             self.api_model,
             AnalyzeDocumentRequest(url_source=url),
             # content_type="application/octet-stream",
-            output_content_format="markdown" if self.mode == "markdown" else "text",
+            output_content_format="markdown" if (self.mode == "markdown" or self.mode == "page_markdown") else "text",
         )
         result = poller.result()
 
         if self.mode in ["single", "markdown"]:
             yield from self._generate_docs_single(result)
-        elif self.mode in ["page"]:
+        elif self.mode in ["page", "page_markdown"]:
             yield from self._generate_docs_page(result)
         else:
             raise ValueError(f"Invalid mode: {self.mode}")
