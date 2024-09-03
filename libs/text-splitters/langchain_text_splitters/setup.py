@@ -1,9 +1,9 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='langchain',
-    version='0.2.15',
-    packages=find_packages(include=['libs']),
+    name='langchain-text-splitters ',
+    version='0.2.2',
+    packages=find_packages(),
     install_requires=[
         # Add your dependencies here
     ],
