@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Iterator, List, Optional
 
-from langchain_core.documents import Document
+from langchain_core.documents import Document, ExtendedDocument
 
 from langchain_community.document_loaders.base import BaseBlobParser
 from langchain_community.document_loaders.blob_loaders import Blob
@@ -70,6 +70,24 @@ class AzureAIDocumentIntelligenceParser(BaseBlobParser):
             )
             yield d
 
+    def _generate_extended_docs_page(self, result: Any) -> Iterator[Document]:
+        for p in result.pages:
+            content = " ".join([line.content for line in p.lines])
+
+            # Add page number to each line's metadata
+            lines_with_page_number = [
+                {"content": line.content, "page_number": p.page_number} for line in p.lines
+            ]
+
+            d = ExtendedDocument(
+                page_content=content,
+                lines=lines_with_page_number,
+                metadata={
+                    "page": p.page_number,
+                },
+            )
+            yield d
+
     def _generate_docs_single(self, result: Any) -> Iterator[Document]:
         yield Document(page_content=result.content, metadata={})
 
@@ -87,8 +105,10 @@ class AzureAIDocumentIntelligenceParser(BaseBlobParser):
 
             if self.mode in ["single", "markdown"]:
                 yield from self._generate_docs_single(result)
-            elif self.mode in ["page", "page_markdown"]:
+            elif self.mode in ["page"]:
                 yield from self._generate_docs_page(result)
+            elif self.mode in ["page_markdown"]:
+                yield from self._generate_extended_docs_page(result)
             else:
                 raise ValueError(f"Invalid mode: {self.mode}")
 
@@ -105,7 +125,9 @@ class AzureAIDocumentIntelligenceParser(BaseBlobParser):
 
         if self.mode in ["single", "markdown"]:
             yield from self._generate_docs_single(result)
-        elif self.mode in ["page", "page_markdown"]:
+        elif self.mode in ["page"]:
             yield from self._generate_docs_page(result)
+        elif self.mode in ["page_markdown"]:
+            yield from self._generate_extended_docs_page(result)
         else:
             raise ValueError(f"Invalid mode: {self.mode}")

@@ -293,3 +293,26 @@ class Document(BaseMedia):
             return f"page_content='{self.page_content}' metadata={self.metadata}"
         else:
             return f"page_content='{self.page_content}'"
+
+class ExtendedDocument(Document):
+    """Class for storing a piece of text with additional line metadata."""
+
+    lines: Optional[dict] = None
+    """Additional line metadata associated with the document."""
+
+    def __init__(self, page_content: str, lines: Optional[dict] = None, **kwargs: Any) -> None:
+        """Initialize the ExtendedDocument with page_content and lines."""
+        super().__init__(page_content=page_content, **kwargs)
+        self.lines = lines
+
+    def __str__(self) -> str:
+        """Override __str__ to include lines."""
+        base_str = super().__str__()
+        if self.lines:
+            return f"{base_str} lines={self.lines}"
+        else:
+            return base_str
+
+    def get_lines(self) -> Optional[dict]:
+        """Return the line metadata."""
+        return self.lines
